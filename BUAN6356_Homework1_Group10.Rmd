@@ -1,0 +1,151 @@
+---
+title: "Homework 1"
+author: Chitresh Kumar,Mohana Surya Chaitanya Narella ,Disha Punjabi, Nidaa
+  Tamkeen, Mai Han Tran
+date: "21/09/2019"
+output:
+  md_document:
+    variant: markdown_github
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+#Load Packages
+```{r}
+if(!require("pacman")) install.packages("pacman")
+pacman::p_load(forecast, tidyverse, gplots, GGally, mosaic,
+               scales, mosaic, mapproj, mlbench, data.table,ggplot2, ggpubr)
+
+
+```
+#Reading the Utilities File
+```{r}
+getwd()
+utilities <- read.csv("Utilities.csv")
+str(utilities)
+```
+##Creating DataTable
+```{r}
+library(data.table)
+Utilities_dt <- setDT(utilities)
+
+```
+
+##Creating the summary
+```{r}
+
+Utilities_dt[,sapply(.SD, summary), .SDcols=names(Utilities_dt)[-1]]
+
+
+```
+##Calculating the standard Deviation
+```{r}
+Utilities_dt[,sapply(.SD, sd), .SDcols=names(Utilities_dt)[-1]]
+
+```
+###Difference in Median and mean of percent nuclear are large so the distribution will be skewed.We are getting few outliers in Fixed_charge and Sales as we can see from mean and quartile range when compared with min and max values of the variables.Sales is comparatively larger in terms of variability over other variables since the standard deviation of sales is the largest 
+## Including Plots
+
+```{r}
+Melted_FixedCharge <- melt(data = Utilities_dt, id.vars ="Company", measure.vars ="Fixed_charge")
+
+Melted_RoR <- melt(data = Utilities_dt, id.vars ="Company", measure.vars ="RoR")
+Melted_Cost <- melt(data = Utilities_dt, id.vars ="Company", measure.vars ="Cost")
+
+Melted_LoadFactor <- melt(data = Utilities_dt, id.vars ="Company", measure.vars ="Load_factor")
+
+Melted_DemandGrowth <- melt(data = Utilities_dt, id.vars ="Company", measure.vars ="Demand_growth")
+
+Melted_Sales <- melt(data = Utilities_dt, id.vars ="Company", measure.vars ="Sales")
+
+Melted_Nuclear <- melt(data = Utilities_dt, id.vars ="Company", measure.vars ="Nuclear")
+
+Melted_FuelCost <- melt(data = Utilities_dt, id.vars ="Company", measure.vars ="Fuel_Cost")
+
+BPFCharge <- ggplot(Melted_FixedCharge) +
+  geom_boxplot(aes(x = variable, y = value), 
+               fill = "gold1", outlier.color = "firebrick2") + 
+  xlab("Fixed Charge") + ggtitle("Boxplot for Fixed Charge")
+
+BPRoR <- ggplot(Melted_RoR) +
+  geom_boxplot(aes(x = variable, y = value), 
+               fill = "gold1", outlier.color = "firebrick2") + 
+  xlab("RoR") + ggtitle("Boxplot for RoR")
+
+BPMC <- ggplot(Melted_Cost) +
+  geom_boxplot(aes(x = variable, y = value), 
+               fill = "gold1", outlier.color = "firebrick2") + 
+  xlab(" Cost") + ggtitle("Boxplot for Cost")
+
+BPLF <- ggplot(Melted_LoadFactor) +
+  geom_boxplot(aes(x = variable, y = value), 
+               fill = "gold1", outlier.color = "firebrick2") + 
+  xlab("Load Factor") + ggtitle("Boxplot for Load Factor")
+
+BPDG <- ggplot(Melted_DemandGrowth) +
+  geom_boxplot(aes(x = variable, y = value), 
+               fill = "gold1", outlier.color = "firebrick2") + 
+  xlab("Demand Growth") + ggtitle("Boxplot for Demand Growth")
+
+BPMS <- ggplot(Melted_Sales) +
+  geom_boxplot(aes(x = variable, y = value), 
+               fill = "gold1", outlier.color = "firebrick2") + 
+  xlab("Sales") + ggtitle("Boxplot for Sales")
+
+BPMN <- ggplot(Melted_Nuclear) +
+  geom_boxplot(aes(x = variable, y = value), 
+               fill = "gold1", outlier.color = "firebrick2") + 
+  xlab("Nuclear") + ggtitle("Boxplot for Nuclear")
+
+BPFCost <- ggplot(Melted_FuelCost) +
+  geom_boxplot(aes(x = variable, y = value), 
+               fill = "gold1", outlier.color = "firebrick2") + 
+  xlab("Fuel Cost") + ggtitle("Boxplot for Fuel Cost")
+
+layout <- ggarrange(BPFCharge, BPRoR, BPMC, BPLF, BPDG, BPMS, BPMN, BPFCost, 
+                    labels = c("1", "2", "3", "4", "5", "6", "7", "8"), ncol = 4, nrow = 2) 
+layout  
+```
+
+###Are there any extreme values for any of the variables ?Which ones?Explain your answers.
+###There are two variables which are having extreme values or outliers as shown in the box plot.Fixed Charge and Sales.For fixed charge the range will be roughly from 0.96 to 1.26 ,there are 3 values less than 0.96 (i.e. Boston,Nevada,San Diego) and 4 variables above 1.26 range (i.e. Central,NY,Florida,Kentucky).
+###For Sales there is 1 value less than lower limit (i.e. NY) and 4 values above the upper limit (i.e. Texas,Puget,Nevada,Idaho)
+##Heat Map
+```{r}
+library(reshape)
+utility.cor.mat <- round(cor(Utilities_dt[,!c("Company")]),2)  
+melted.utility.cor.mat <- melt(utility.cor.mat) 
+
+ggplot(melted.utility.cor.mat, aes(x = X1, y = X2, fill = value)) + 
+  scale_fill_gradient(low="wheat", high="orangered") +
+  geom_tile() + 
+  geom_text(aes(x = X1, y = X2, label = value)) +
+  ggtitle("Correlation of Variables")
+
+```
+###There is positive relationship between (demand_growth and cost),(load factor and fuel cost).There is strong positive relationship between ROR and fixed charge.There is strong negative relationship between Sales and Fuel Cost.Inverse relationship btw demand growth and fixed charge  shows as more people use utility ,the fixed cost goes down.Positive relationship btw fuel cost and load factor shows that for better utility efficiency, the cost of fuel will be higher.
+###PCA 
+```{r}
+Utilities.df <- setDF(Utilities_dt)
+pcs8 <- prcomp(na.omit(Utilities.df[,-c(1)])) 
+summary(pcs8)
+pcs8$rot
+
+```
+###From standard PCAs analysis,we get to know that PC1 and PC2 can give us the values required for correct analysis of the data. So,We can drop rest of the variables as we have already reached 99% of the cumulative proportion.We are just considering one variable for dimension reduction analysis
+
+####Normalised PCAs
+```{r}
+pcs.cor <- prcomp(na.omit(Utilities.df[,-c(1)]), scale. = T)
+summary(pcs.cor)
+pcs.cor$rot
+```
+###From Normalised PCAs,since all variables are considered for the dimension reduction analysis so the changes in cumultive proprtion is gradually increasing.In this we need to consider PC1 to PC7 for better results.
+
